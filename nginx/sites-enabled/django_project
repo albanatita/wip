@@ -1,0 +1,34 @@
+server {
+
+    listen 80;
+    rewrite ^ https://$http_host$request_uri? permanent; 
+}
+
+server {
+    listen 443;
+    ssl on;
+    server_name alkemata.com;
+    charset utf-8;
+    ssl_certificate /etc/nginx/ssl/nginx.crt;
+    ssl_certificate_key /etc/nginx/ssl/nginx.key;
+    location /static/cms {
+        alias /usr/src/app/static/cms/;
+    }
+
+    location /jupyter {
+	proxy_pass http://jupyter:8888;
+	auth_basic "Restricted content";
+	auth_basic_user_file /etc/nginx/password/.htpasswd;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
+
+    location / {
+        proxy_pass http://web:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+}

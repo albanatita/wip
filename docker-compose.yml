@@ -1,0 +1,43 @@
+web:
+  restart: always
+  build: ./web
+  expose:
+    - "8000"
+  links:
+    - postgres:postgres
+  volumes:
+    - ./web:/usr/src/app
+  env_file: .env
+  command: /usr/local/bin/gunicorn alkemata.wsgi:application -w 2 -b :8000 --reload
+
+nginx:
+  restart: always
+  build: ./nginx/
+  ports:
+    - "80:80"
+    - "443:443"
+  volumes:
+    - /www/static
+  volumes_from:
+    - web
+  links:
+    - web:web
+    - jupyter:jupyter
+
+postgres:
+  restart: always
+  env_file: .env
+  image: postgres:latest
+  volumes:
+    - /mnt/vdb/database:/var/lib/postgresql/data
+  ports:
+    - "5432:5432"
+
+jupyter:
+  restart: always
+  image: jupyter/scipy-notebook
+  ports:
+    - "8888:8888"
+  volumes:
+    - /mnt/vdb/notebooks:/home/jovyan/notebooks
+  command: start-notebook.sh --NotebookApp.token='' --NotebookApp.base_url=/jupyter
