@@ -1,8 +1,11 @@
 {% extends "news/base.html" %}
 
 <form method="post">
-  {% csrf_token %}
+	  {% csrf_token %}
+	 <div class="form-group">
+
   {{ user_form.as_p }}
   {{ profile_form.as_p }}
-  <button type="submit">Save changes</button>
+</div>
+  <button class="btn btn-primary" type="submit">Save changes</button>
 </form>

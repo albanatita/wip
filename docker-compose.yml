@@ -5,10 +5,19 @@ web:
     - "8000"
   links:
     - postgres:postgres
+    - redis:redis
   volumes:
     - ./web:/usr/src/app
   env_file: .env
-  command: /usr/local/bin/gunicorn alkemata.wsgi:application -w 2 -b :8000 --reload
+  command: /usr/local/bin/daphne -b :8000 alkemata.asgi:channel_layer
+
+ worker:
+  build: .
+  command: python manage.py runworker
+  volumes:
+   - .:/code
+  links:
+   - redis
 
 nginx:
   restart: always
@@ -33,11 +42,14 @@ postgres:
   ports:
     - "5432:5432"
 
+redis:
+  image: redis:3.0-alpine
+
 jupyter:
+  build: ./jupyter/
   restart: always
-  image: jupyter/scipy-notebook
   ports:
     - "8888:8888"
   volumes:
     - /mnt/vdb/notebooks:/home/jovyan/notebooks
-  command: start-notebook.sh --NotebookApp.token='' --NotebookApp.base_url=/jupyter
+  command: jupyter kernelgateway --KernelGatewayApp.ip=0.0.0.0 --KernelGatewayApp.port=8888
